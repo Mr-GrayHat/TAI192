@@ -87,3 +87,12 @@ def updateUser(id: int, user: dict):
             return {"message": "User updated successfully", "user": existing_user}
     
     raise HTTPException(status_code=404, detail="User not found") 
+
+@app.delete('/deleteUser/{id}', tags=['Operaciones CRUD'])
+def deleteUser(id: int):
+    for existing_user in users:
+        if existing_user['id'] == id:
+            users.remove(existing_user)
+            return {"message": "User deleted successfully", "user": existing_user}
+    
+    raise HTTPException(status_code=404, detail="User not found") 
