@@ -30,3 +30,11 @@ def get_task(task_id: int):
             return task
     raise HTTPException(status_code=404, detail="Tarea no encontrada")
 
+# Crear una nueva tarea
+@app.post("/tasks", tags=["Tareas"])
+def create_task(task: Task):
+    for existing_task in tasks:
+        if existing_task.id == task.id:
+            raise HTTPException(status_code=400, detail="El ID de la tarea ya existe")
+    tasks.append(task)
+    return {"message": "Tarea creada exitosamente", "task": task}
