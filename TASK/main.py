@@ -38,3 +38,14 @@ def create_task(task: Task):
             raise HTTPException(status_code=400, detail="El ID de la tarea ya existe")
     tasks.append(task)
     return {"message": "Tarea creada exitosamente", "task": task}
+
+# Actualizar una tarea existente
+@app.put("/tasks/{task_id}", tags=["Tareas"])
+def update_task(task_id: int, updated_task: Task):
+    for index, task in enumerate(tasks):
+        if task.id == task_id:
+            tasks[index] = updated_task
+            return {"message": "Tarea actualizada exitosamente", "task": updated_task}
+    raise HTTPException(status_code=404, detail="Tarea no encontrada")
+
+
