@@ -48,4 +48,12 @@ def update_task(task_id: int, updated_task: Task):
             return {"message": "Tarea actualizada exitosamente", "task": updated_task}
     raise HTTPException(status_code=404, detail="Tarea no encontrada")
 
+# Eliminar una tarea
+@app.delete("/tasks/{task_id}", tags=["Tareas"])
+def delete_task(task_id: int):
+    for task in tasks:
+        if task.id == task_id:
+            tasks.remove(task)
+            return {"message": "Tarea eliminada exitosamente"}
+    raise HTTPException(status_code=404, detail="Tarea no encontrada")
 
