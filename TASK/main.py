@@ -8,18 +8,25 @@ app = FastAPI(
     version="1.0"
 )
 
-# Modelo de datos para una tarea
 class Task(BaseModel):
     id: int
     title: str
     description: Optional[str] = None
-    completed: bool = False
+    expiration_date: str
+    completed: str
 
-# Base de datos simulada
 tasks: List[Task] = []
 
 # Obtener todas las tareas
 @app.get("/tasks", tags=["Tareas"])
 def get_tasks():
     return {"tasks": tasks}
+
+# Obtener una tarea específica por ID
+@app.get("/tasks/{task_id}", tags=["Tareas"])
+def get_task(task_id: int):
+    for task in tasks:
+        if task.id == task_id:
+            return task
+    raise HTTPException(status_code=404, detail="Tarea no encontrada")
 
