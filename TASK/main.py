@@ -13,7 +13,7 @@ class Task(BaseModel):
     title: str
     description: Optional[str] = None
     expiration_date: str
-    completed: str
+    status: str
 
 tasks: List[Task] = []
 
