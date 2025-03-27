@@ -5,6 +5,9 @@ class modeloUsuario(BaseModel):
     age:int = Field(..., ge=1, le=120)
     email:EmailStr = Field(..., examples=["Usuario23@gmail.com"])
 
+class modeloUsuarioResponse(modeloUsuario):
+    id: int
+
 
 class modeloAuth(BaseModel):
     email:EmailStr = Field(..., description="Correo electrónico válido", example="correo@example.com")

@@ -1,38 +1,53 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from typing import List
-from modelsPydantic import modeloUsuario, modeloAuth
-from middlewares import BearerVWT
-from genToken import createToken
-from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, EmailStr
 from DB.conection import Session, engine, Base
 from models.modelsDB import User
+from genToken import createToken
+from fastapi.responses import JSONResponse
 
+# Creación de la app
 app = FastAPI(
     title="API de Usuarios",
     description="API completa con CRUD de usuarios",
     version='2.0.0'
 )
 
+# Crear tablas en la base de datos
 Base.metadata.create_all(bind=engine)
 
-# Endpoint home
+# --------------------------------------
+# Modelos Pydantic
+# --------------------------------------
+class modeloUsuario(BaseModel):
+    name: str = Field(..., min_length=3, max_length=85, description="Nombre con mínimo de 3 letras y máximo a 85.")
+    age: int = Field(..., ge=1, le=120)
+    email: EmailStr = Field(..., examples=["Usuario23@gmail.com"])
+
+class modeloUsuarioResponse(modeloUsuario):
+    id: int
+
+class modeloAuth(BaseModel):
+    email: EmailStr = Field(..., description="Correo electrónico válido", example="correo@example.com")
+    passw: str = Field(..., min_length=8, description="Contraseña de mínimo 8 caractéres")
+
+# --------------------------------------
+# Endpoints
+# --------------------------------------
 @app.get('/', tags=['Hola mundo'])
 def home():
     return {'message': 'Bienvenido a la API de usuarios'}
 
-
 @app.post('/auth/', tags=['Autentificación'])
-def login(autorización:modeloAuth):
+def login(autorización: modeloAuth):
     if autorización.email == 'crojo@example.com' and autorización.passw == '12345678':
-        token:str = createToken(autorización.model_dump())
-        print(token)
+        token: str = createToken(autorización.model_dump())
         return JSONResponse(content=token)
     else:
-        return {"Aviso":"El usuario no está autorizado."}
+        return {"Aviso": "El usuario no está autorizado."}
 
 @app.get('/usuarios', 
-        #  dependencies=[Depends(BearerVWT())], 
-         response_model=List[modeloUsuario], 
+         response_model=List[modeloUsuarioResponse], 
          tags=['Operaciones CRUD'])
 def get_usuarios():
     db = Session()
@@ -43,7 +58,7 @@ def get_usuarios():
         db.close()
 
 @app.get('/usuarios/{id}', 
-         response_model=modeloUsuario, 
+         response_model=modeloUsuarioResponse, 
          tags=['Operaciones CRUD'])
 def get_usuario(id: int):
     db = Session()
@@ -56,7 +71,7 @@ def get_usuario(id: int):
         db.close()
 
 @app.post('/usuarios/', 
-          response_model=modeloUsuario, 
+          response_model=modeloUsuarioResponse, 
           status_code=status.HTTP_201_CREATED,
           tags=['Operaciones CRUD'])
 def crear_usuario(usuario: modeloUsuario):
@@ -77,7 +92,7 @@ def crear_usuario(usuario: modeloUsuario):
         db.close()
 
 @app.put('/usuarios/{id}', 
-         response_model=modeloUsuario, 
+         response_model=modeloUsuarioResponse, 
          tags=['Operaciones CRUD'])
 def actualizar_usuario(id: int, usuario_actualizado: modeloUsuario):
     db = Session()
@@ -86,7 +101,6 @@ def actualizar_usuario(id: int, usuario_actualizado: modeloUsuario):
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         
-        # Actualizar campos
         for key, value in usuario_actualizado.model_dump().items():
             setattr(usuario, key, value)
             
@@ -103,7 +117,7 @@ def actualizar_usuario(id: int, usuario_actualizado: modeloUsuario):
         db.close()
 
 @app.delete('/usuarios/{id}', 
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK, 
             tags=['Operaciones CRUD'])
 def eliminar_usuario(id: int):
     db = Session()
@@ -114,7 +128,7 @@ def eliminar_usuario(id: int):
         
         db.delete(usuario)
         db.commit()
-        return
+        return {"detail": "Usuario eliminado exitosamente"}  
     except Exception as e:
         db.rollback()
         raise HTTPException(
